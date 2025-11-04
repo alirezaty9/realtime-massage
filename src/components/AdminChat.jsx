@@ -164,7 +164,7 @@ function AdminChat({ messages, onSendMessage }) {
       <div className="max-w-4xl mx-auto h-screen flex flex-col py-2 sm:py-4">
         <div className="bg-white rounded-t-lg shadow-xl p-3 sm:p-4 flex justify-between items-center gap-2">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Admin Panel</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">ششششششAdmin Panel</h1>
             <p className="text-xs sm:text-sm text-gray-600">All messages from users</p>
           </div>
           <button
