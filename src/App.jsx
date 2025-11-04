@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { io } from 'socket.io-client'
 import UserChat from './components/UserChat'
 import AdminChat from './components/AdminChat'
+import AdminLogin from './components/AdminLogin'
 
 const socket = io('http://192.168.88.70:5173', {
   maxHttpBufferSize: 3 * 1024 * 1024 * 1024, // 3 GB (supports 2GB files with base64 overhead)
@@ -16,6 +17,7 @@ const socket = io('http://192.168.88.70:5173', {
 function App() {
   const [messages, setMessages] = useState([])
   const [currentPath, setCurrentPath] = useState(window.location.pathname)
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
 
   useEffect(() => {
     // Load existing messages when connected
@@ -69,12 +71,10 @@ function App() {
     socket.emit('send-message', message)
   }
 
-  const navigateTo = (path) => {
-    window.history.pushState({}, '', path)
-    setCurrentPath(path)
-  }
-
   if (currentPath === '/admin') {
+    if (!isAdminAuthenticated) {
+      return <AdminLogin onLogin={() => setIsAdminAuthenticated(true)} />
+    }
     return <AdminChat messages={messages} onSendMessage={handleSendMessage} />
   }
 

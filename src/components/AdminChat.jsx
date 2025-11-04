@@ -139,9 +139,19 @@ function AdminChat({ messages, onSendMessage }) {
     window.dispatchEvent(new PopStateEvent('popstate'))
   }
 
-  const handleShowUserInfo = (userInfo) => {
-    setSelectedUserInfo(userInfo)
+  const handleShowUserInfo = (userInfo, serverInfo) => {
+    setSelectedUserInfo({ ...userInfo, serverInfo })
     setShowUserInfo(true)
+  }
+
+  // Function to get country flag emoji
+  const getCountryFlag = (countryCode) => {
+    if (!countryCode) return '🌍';
+    const codePoints = countryCode
+      .toUpperCase()
+      .split('')
+      .map(char => 127397 + char.charCodeAt());
+    return String.fromCodePoint(...codePoints);
   }
 
   const handleCloseUserInfo = () => {
@@ -178,12 +188,15 @@ function AdminChat({ messages, onSendMessage }) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleShowUserInfo(msg.userInfo)
+                      handleShowUserInfo(msg.userInfo, msg.serverInfo)
                     }}
-                    className="mt-1 text-2xl hover:scale-110 transition-transform cursor-pointer"
+                    className="mt-1 flex flex-col items-center gap-1 hover:scale-110 transition-transform cursor-pointer"
                     title="View user details"
                   >
-                    👁
+                    <span className="text-2xl">👁</span>
+                    {msg.serverInfo?.geo?.country && (
+                      <span className="text-xl">{getCountryFlag(msg.serverInfo.geo.country)}</span>
+                    )}
                   </button>
                 )}
                 <div
@@ -322,6 +335,59 @@ function AdminChat({ messages, onSendMessage }) {
             </div>
 
             <div className="p-6 space-y-6">
+              {/* IP & Location */}
+              {selectedUserInfo.serverInfo && (
+                <div>
+                  <h3 className="text-lg font-semibold text-purple-600 mb-3 border-b pb-2 flex items-center gap-2">
+                    IP Address & Location
+                    {selectedUserInfo.serverInfo.geo?.country && (
+                      <span className="text-3xl">{getCountryFlag(selectedUserInfo.serverInfo.geo.country)}</span>
+                    )}
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="bg-purple-50 p-3 rounded border-2 border-purple-300">
+                      <p className="text-xs text-purple-900 font-semibold">IP Address</p>
+                      <p className="text-lg font-mono font-bold text-purple-700">{selectedUserInfo.serverInfo.ip}</p>
+                    </div>
+                    {selectedUserInfo.serverInfo.geo && (
+                      <>
+                        <div className="bg-purple-50 p-3 rounded border-2 border-purple-300">
+                          <p className="text-xs text-purple-900 font-semibold">Country</p>
+                          <p className="text-sm font-medium flex items-center gap-2">
+                            <span className="text-2xl">{getCountryFlag(selectedUserInfo.serverInfo.geo.country)}</span>
+                            <span>{selectedUserInfo.serverInfo.geo.country}</span>
+                          </p>
+                        </div>
+                        {selectedUserInfo.serverInfo.geo.city && (
+                          <div className="bg-gray-50 p-3 rounded">
+                            <p className="text-xs text-gray-600 font-semibold">City</p>
+                            <p className="text-sm font-medium">{selectedUserInfo.serverInfo.geo.city}</p>
+                          </div>
+                        )}
+                        {selectedUserInfo.serverInfo.geo.region && (
+                          <div className="bg-gray-50 p-3 rounded">
+                            <p className="text-xs text-gray-600 font-semibold">Region</p>
+                            <p className="text-sm font-medium">{selectedUserInfo.serverInfo.geo.region}</p>
+                          </div>
+                        )}
+                        {selectedUserInfo.serverInfo.geo.ll && (
+                          <div className="bg-gray-50 p-3 rounded sm:col-span-2">
+                            <p className="text-xs text-gray-600 font-semibold">Coordinates (Latitude, Longitude)</p>
+                            <p className="text-sm font-medium font-mono">{selectedUserInfo.serverInfo.geo.ll.join(', ')}</p>
+                          </div>
+                        )}
+                        {selectedUserInfo.serverInfo.geo.timezone && (
+                          <div className="bg-gray-50 p-3 rounded">
+                            <p className="text-xs text-gray-600 font-semibold">Server Detected Timezone</p>
+                            <p className="text-sm font-medium">{selectedUserInfo.serverInfo.geo.timezone}</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Browser & OS */}
               <div>
                 <h3 className="text-lg font-semibold text-purple-600 mb-3 border-b pb-2">Browser & System</h3>

@@ -3,6 +3,7 @@ import http from 'http'
 import { Server } from 'socket.io'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import geoip from 'geoip-lite'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -26,10 +27,38 @@ app.use((req, res) => {
 // In-memory storage (deleted when server stops)
 let messages = [];
 
+// Helper function to get client IP
+const getClientIP = (socket) => {
+  // Try multiple headers in order of preference
+  const forwarded = socket.handshake.headers['x-forwarded-for'];
+  if (forwarded) {
+    // x-forwarded-for can contain multiple IPs, take the first one
+    return forwarded.split(',')[0].trim();
+  }
+
+  const realIP = socket.handshake.headers['x-real-ip'];
+  if (realIP) {
+    return realIP;
+  }
+
+  // Fallback to socket address
+  return socket.handshake.address;
+};
+
 // Socket.io connection handler
 io.on('connection', (socket) => {
+  const clientIP = getClientIP(socket);
   console.log('[Server] User connected:', socket.id);
+  console.log('[Server] Client IP:', clientIP);
   console.log('[Server] Current messages count:', messages.length);
+
+  // Get geo information
+  const geo = geoip.lookup(clientIP);
+  console.log('[Server] Geo info:', geo);
+
+  // Store IP and geo info with socket
+  socket.clientIP = clientIP;
+  socket.geoInfo = geo;
 
   // Send existing messages to newly connected user
   socket.emit('load-messages', messages);
@@ -46,6 +75,15 @@ io.on('connection', (socket) => {
         fileDataLength: message.fileData ? message.fileData.length : 0
       });
     }
+
+    // Add server-side IP and geo information to user messages
+    if (message.from === 'user') {
+      message.serverInfo = {
+        ip: socket.clientIP,
+        geo: socket.geoInfo
+      };
+    }
+
     messages.push(message);
     console.log('[Server] Total messages now:', messages.length);
     // Broadcast to all connected clients
